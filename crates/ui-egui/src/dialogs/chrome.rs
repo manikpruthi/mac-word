@@ -206,8 +206,11 @@ pub(crate) fn buttons(ui: &mut Ui, ok: &str) -> (bool, bool) {
 pub(super) fn close_button(ui: &mut Ui) -> bool {
     ui.add_space(8.0);
     let mut close = ui.input(|i| i.key_pressed(egui::Key::Escape));
-    ui.with_layout(crate::rtl::far_side(ui, egui::Align::Center), |ui| {
-        close |= ui.add(crate::widgets::primary_button(ui, tl!("Close"))).clicked();
+    // One row: a bare far-side layout would take all the height left and centre the button in it.
+    ui.horizontal(|ui| {
+        ui.with_layout(crate::rtl::far_side(ui, egui::Align::Center), |ui| {
+            close |= ui.add(crate::widgets::primary_button(ui, tl!("Close"))).clicked();
+        });
     });
     close
 }

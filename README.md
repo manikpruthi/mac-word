@@ -175,8 +175,9 @@ scans the fonts. Full methodology, cache limits and reproduction commands are in
 ## Differences from WordCraft
 
 - **Identity.** Named Mac-Word, version 1.0.0, bundle id `com.manikpruthi.mac-word`, original icon,
-  settings and logs under Mac-Word. About credits WordCraft and keeps the Contributors, Models and
-  Language data tabs (the spelling dictionaries' licences require their text).
+  settings and logs under Mac-Word. About shows only the app's name, version and
+  licence (crediting WordCraft); the Contributors, Models and Language data pages (the spelling
+  dictionaries' licences require their text) stay in the binary and open on their own through `ui.dialog`.
 - **Private.** No update checks, self-updater, update URLs, Discord or ArtCraft links: the app
   never phones home.
 - **Windows.** View › Window › Arrange All, View Side by Side and Synchronous Scrolling. While
@@ -212,7 +213,7 @@ docs/screenshots/            README screenshots
 docs/                        architecture, parity, gaps and fork documentation
 packaging/macos/             Info.plist template (Word file types) and entitlements
 scripts/bench-memory.py      start-up and memory benchmark used for docs/memory.md
-contributors/                upstream contributor data (About › Contributors)
+contributors/                upstream contributor data (the Contributors page)
 xtask/                       local checks (`cargo xtask ci`) and version bumps
 ```
 

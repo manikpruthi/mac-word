@@ -1113,13 +1113,8 @@ fn about_dialog(ui: &mut Ui, d: &mut Dialog) -> bool {
         return false;
     };
     ui.set_width(660.0);
-    // Contributors, Models and Language data carry the credits and licences of the code and
-    // data Mac-Word is built from (the spelling dictionaries' licences require their text).
-    let names = ["About", "Contributors", "Models", "Language data"].map(|n| tl!(n).to_string());
-    if let Some(i) = crate::widgets::dialog_tabs(ui, &names, *tab as usize) {
-        *tab = i as u8;
-    }
-    ui.add_space(6.0);
+    // No tab strip: Help ▸ About shows only the About page. Contributors, Models and Language
+    // data (the credits and licences the spelling dictionaries require) open by their own ids.
     match *tab {
         1 => crate::credits::contributors_ui(ui),
         2 => crate::credits::models_ui(ui),

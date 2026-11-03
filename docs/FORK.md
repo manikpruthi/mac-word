@@ -27,7 +27,7 @@ fixed the bugs above and cut GPU memory (see [memory.md](memory.md)).
 | CLI | `wordcraft-cli` | `mac-word-cli` (packaged rename; package name unchanged) |
 | Settings | `~/Library/Application Support/WordCraft` | `~/Library/Application Support/Mac-Word` |
 | Logs | `logs/wordcraft.log` | `logs/mac-word.log` |
-| About | contributor and model tabs, upstream links | “Mac-Word”, “Version 1.0.0”, “From Manik Pruthi”; the Contributors, Models and Language data tabs stay (the dictionaries' licences require their text) |
+| About | contributor and model tabs, upstream links | “Mac-Word”, “Version 1.0.0”, “From Manik Pruthi”; no tabs; the Contributors, Models and Language data pages stay, opened on their own (the dictionaries' licences require their text) |
 | Default comment/track-changes author | WordCraft User | The macOS account's full name (`id -F`) until one is set in File › Options; `Mac-Word User` in the CLI and MCP server |
 | Icons | WordCraft artwork | Original Mac-Word icon (`packaging/icons/mac-word-icon.swift`) |
 | Update checks | craft-update at startup and Help menu | Removed entirely (dependency, UI, command and URLs) |
