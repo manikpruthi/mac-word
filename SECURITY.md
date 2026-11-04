@@ -23,4 +23,4 @@ Fixes go into `main` and ship in the next release. Older releases don't get back
 
 In scope: anything that lets a document, file, command, MCP or control-channel request, or network response read or write files it shouldn't, run code, leak data, or crash WordCraft and lose the user's work.
 
-Crashes from hostile input count, because WordCraft treats every panic as a bug (see [Never crash](AGENTS.md)).
+Crashes from hostile input count, because WordCraft treats every panic as a bug.

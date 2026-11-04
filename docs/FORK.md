@@ -74,7 +74,7 @@ dictionary folder is `~/Library/Application Support/Mac-Word/dictionaries`.
   `Info.plist` next to `.docx`, `.dotx`, `.doc`, `.odt`, `.rtf`, Markdown, HTML and text, with
   imported declarations of their public type identifiers, so they resolve on a Mac without Word.
   Which types Word registers was checked with REA in Word's `Info.plist`, an exception to the
-  clean-room rule in `CLAUDE.md` (bundle file listings only) made at the owner's request: only
+  upstream clean-room rule (bundle file listings only) made at the owner's request: only
   the identifiers and extensions, which interoperability needs, were used; the descriptions are
   Mac-Word's own wording. Mac-Word stays an `Alternate` handler: it never becomes
   the default app without a click in File › Options › General.

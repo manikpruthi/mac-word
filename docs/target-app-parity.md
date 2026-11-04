@@ -33,7 +33,7 @@ Labels → New Document with one label per recipient continues across sheets for
 
 - **Microsoft Word for Mac 16.113.4** (Microsoft 365 subscription build, installed on the owner's Mac
   at `/Applications/Microsoft Word.app`; version read with `mdls`, bundle modified 2026-10-06).
-- Inspected black-box, by **file listing only**, as `AGENTS.md` § Clean room requires (no bundle file
+- Inspected black-box, by **file listing only**, as the clean-room rule requires (no bundle file
   was opened or read): 31 `.lproj` folders (30 interface languages plus Base), 120 proofing tools
   under `SharedSupport/Proofing Tools` (spellers, grammars, hyphenators and thesauri for ~50
   languages), 12 bibliography styles under `Resources/Style` (APA 6th, Chicago, GB 7714, GOST name

@@ -4,7 +4,7 @@
 
 How WordCraft is built today. The longer design notes in
 `plan/architecture.md` are gitignored and local to the original author's machine; this file is the
-committed, current summary. Rules for working in the code are in [`AGENTS.md`](../AGENTS.md).
+committed, current summary.
 
 ## Layers
 
@@ -73,4 +73,4 @@ crate name links to its source tree.
 | 2026-11-01 | minor | `proof` left the workspace: it is `craft-proof` in storytold/craft-libs (with its history), and the spelling and hyphenation data is craft-i18n's `language-data/` (`CRAFT_I18N_DIR`); `assets/spelling` and `assets/hyphenation` are gone |
 | 2026-10-28 | major | Recounted workspace crates, layers and Rust source lines; refreshed proofing languages and documented current engine/layout module boundaries and source links |
 | 2026-10-10 | minor | `proof`: proofing languages (English, Polish), affix engine, Polish patterns; layout and engine route each run by its language |
-| 2026-10-10 | major | First committed architecture doc, from the crates' sources and `AGENTS.md` |
+| 2026-10-10 | major | First committed architecture doc, from the crates' sources |
