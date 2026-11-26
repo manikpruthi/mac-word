@@ -183,7 +183,7 @@ pinned pack index and installed through the font store into `<font store>/langua
   provisionally: Install fetches the list, then installs the pack if there is one, and the bar goes
   if there isn't. The caret's typing language counts, and the spelling context menu's heading is in
   the interface language.
-- Help › About › Language data shows the full licence texts of the embedded English data and the
+- `ui.dialog {"name":"languageData"}` opens a standalone dialog with the full licence texts of the embedded English data and the
   installed packs.
 - One language list: Set Proofing Language lists the built-in languages and every installed or
   available pack's language (Bulgarian, Belarusian, Spanish (Cuba)…), each once and sorted by

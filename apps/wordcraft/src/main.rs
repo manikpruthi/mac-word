@@ -609,11 +609,15 @@ fn main() -> eframe::Result {
             .with_app_id(app_id)
             .with_inner_size([1280.0, 820.0])
             .with_min_inner_size(wordcraft_ui_egui::window_geometry::MIN_SIZE)
-            .with_drag_and_drop(true)
-            .with_fullsize_content_view(true)
-            .with_titlebar_shown(false)
-            .with_title_shown(false),
+            .with_drag_and_drop(true),
         ..Default::default()
+    };
+    #[cfg(target_os = "macos")]
+    let window_frame = {
+        use craft::window::policy::{Decision, Desktop, DesktopKind, Frame};
+        let frame = Frame::Inset(craft::window::mac::os_default());
+        options.viewport = craft::window::policy::apply(options.viewport, &frame);
+        Decision { frame, overridden: None, desktop: Desktop { kind: DesktopKind::Other, ssd: None, gtk_theme: None, icon_theme: None } }
     };
     if let Some(icon) = app_icon() {
         options.viewport = options.viewport.with_icon(icon);
@@ -753,6 +757,8 @@ fn main() -> eframe::Result {
                 .system(SystemReader::start(wake))
                 .clipboard(Clipboard::new(SystemClipboard::new().decoder(decode_png)))
                 .placement(placement);
+            #[cfg(target_os = "macos")]
+            let spec = spec.frame(window_frame);
             // PLAN: assumed `wordcraft_ui_egui::ui_fonts` re-exports sh.A10's `app::fonts::ui_fonts` (`mod app` is private; app-hub/shell-w11).
             embed::install(&ctx, spec, &wordcraft_ui_egui::ui_fonts(lang)).map_err(|e| format!("the runtime could not be installed: {e}"))?;
             // The system region picks the new document's paper, the units and the decimal

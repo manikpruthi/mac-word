@@ -1,4 +1,4 @@
-# Contributors in the About window
+# Contributor and model metadata
 
 The **Contributors** page credits everyone who contributed to WordCraft, and the **Models** page credits
 the AI models named in `Co-Authored-By` trailers.
@@ -22,7 +22,7 @@ the AI models named in `Co-Authored-By` trailers.
 
 ## In WordCraft
 
-- The About window is `Dialog::About` in `crates/ui-egui/src/dialogs.rs` (Help, or Backstage ▸ About), which shows only the About page. `ui.dialog {"name":"contributors"}` / `"models"` / `"languageData"` opens that page on its own (no tab strip).
+- Mac-Word’s About dialog shows a single Manik Pruthi page. The source data records upstream contributor and model metadata.
 
 ## Credit yourself
 

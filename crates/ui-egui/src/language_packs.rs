@@ -21,7 +21,6 @@ use craft::ui::layout::RowAlign;
 use craft::ui::layout_components::{Row, Stack};
 use craft::ui::list::{List, ListRow};
 use craft::ui::notices::{Notice, NoticeAction};
-use craft::ui::patterns::form_dialogs::AboutAppTab;
 use craft::ui::runtime::env::{Env, Label};
 use craft::ui::runtime::windows::WindowHost;
 use craft::ui::sections::{DialogRole, FooterButton, GroupBox};
@@ -940,7 +939,7 @@ fn settle_picker(app: &mut WordApp, _ctx: &egui::Context, id: DialogId) -> Settl
     Settle::Keep
 }
 
-/// The licence texts About shows, read again only when the dictionaries change (they can run to
+/// The licence texts the Language data dialog shows, read again only when the dictionaries change (they can run to
 /// megabytes).
 static LICENCES: std::sync::Mutex<Option<(u64, Arc<Vec<(String, String)>>)>> = std::sync::Mutex::new(None);
 
@@ -958,18 +957,14 @@ fn licence_texts() -> Arc<Vec<(String, String)>> {
     texts
 }
 
-/// About › Language data: the full licence text of the embedded English data and of each
-/// installed pack. The body reads only the static licence texts, so the tab needs no app; the About dialog's tab
-/// body scrolls, so a long text does not change the dialog's size.
-pub(crate) fn language_data_tab() -> AboutAppTab {
-    AboutAppTab::new("languageData", tl!("Language data"), |ui: &mut Ui| {
-        Text::new(tl!("The spelling and hyphenation data Mac-Word uses, and their licences.")).shade(Shade::Faint).show(ui);
-        for (at, (title, text)) in licence_texts().iter().enumerate() {
-            GroupBox::new(title.clone(), None).id_salt(("language_data", at)).show(ui, |ui, _| {
-                Text::new(text.clone()).shade(Shade::Faint).show(ui);
-            });
-        }
-    })
+/// Full licence texts for the embedded English data and installed language packs.
+pub(crate) fn language_data(ui: &mut Ui) {
+    Text::new(tl!("The spelling and hyphenation data Mac-Word uses, and their licences.")).shade(Shade::Faint).show(ui);
+    for (at, (title, text)) in licence_texts().iter().enumerate() {
+        GroupBox::new(title.clone(), None).id_salt(("language_data", at)).show(ui, |ui, _| {
+            Text::new(text.clone()).shade(Shade::Faint).show(ui);
+        });
+    }
 }
 
 #[cfg(test)]

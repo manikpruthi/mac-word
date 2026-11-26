@@ -9,7 +9,7 @@
 use craft::color_ui::ui::{ColorPickerDialog, ColorPickerTab};
 use craft::ui::contract::Bind;
 use craft::ui::dialog::{ChildDialog, DialogId, DialogResult, DialogStack, HeldAnswer, HeldOk, StackDialog, dialog_id};
-use craft::ui::patterns::form_dialogs::{AboutTab, FormButtons, FormCx, FormDialog, HostedAbout};
+use craft::ui::patterns::form_dialogs::{FormButtons, FormCx, FormDialog};
 use craft::ui::runtime::env::Label;
 use craft::ui::sections::FooterButton;
 use egui::{Context, Ui};
@@ -74,7 +74,7 @@ fn open_node<D: StackDialog + 'static>(app: &mut WordApp, parent: Option<DialogI
 }
 
 /// Replaces the hooks of `id` with `entries`; the last entry settles first.
-fn register(app: &mut WordApp, id: DialogId, entries: &[DialogHooks]) {
+pub(super) fn register(app: &mut WordApp, id: DialogId, entries: &[DialogHooks]) {
     app.dialog_hooks.retain(|(held, _)| *held != id);
     app.dialog_hooks.extend(entries.iter().map(|hooks| (id, *hooks)));
 }
@@ -121,22 +121,6 @@ pub(crate) fn close_all(app: &mut WordApp, ctx: &Context) {
         app.canvas.focus_page_after_pass();
         ctx.request_repaint();
     }
-}
-
-/// Opens the About dialog on `tab`. A second About while one is open opens nothing: the first keeps the input.
-pub(crate) fn open_about(app: &mut WordApp, tab: AboutTab) -> Option<DialogId> {
-    // PLAN: assumed `credits::about(tab: AboutTab) -> HostedAbout` (chrome-w12)
-    let about = crate::credits::about(tab);
-    let id = app.dialog_host.open_unless_open(about).ok()?;
-    register(app, id, &[DialogHooks { prepare: None, settle: about_settle }]);
-    Some(id)
-}
-
-fn about_settle(app: &mut WordApp, ctx: &Context, id: DialogId) -> Settle {
-    if let Some(url) = app.dialog_host.get_mut_by_id::<HostedAbout>(id).and_then(HostedAbout::take_link) {
-        ctx.open_url(egui::OpenUrl::new_tab(url));
-    }
-    if app.dialog_host.take_by_id::<HostedAbout>(id).is_some() { Settle::Done } else { Settle::Keep }
 }
 
 /// What the form's body asks the app for in a pass; `settle` answers each.

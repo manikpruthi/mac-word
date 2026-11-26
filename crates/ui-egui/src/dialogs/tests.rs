@@ -1776,6 +1776,7 @@ fn every_dialog_name_opens_its_dialog_or_none() {
         "manageStyles",
         "templates",
         "about",
+        "languageData",
         "fontDownload",
         "compare",
     ];
@@ -1793,8 +1794,7 @@ fn every_dialog_name_opens_its_dialog_or_none() {
         let keys = open_keys(&a);
         let expect = match name {
             "goto" => "find",
-            // The framework's About dialog keys itself `help.about` whichever tab it opens on.
-            "about" | "contributors" | "models" | "languageData" => "help.about",
+            "about" => "help.about",
             "pageBorders" | "shading" => "borders",
             // Type a New List is the Recipient List dialog started on an empty list.
             "newRecipientList" => "recipientList",
@@ -1808,7 +1808,7 @@ fn every_dialog_name_opens_its_dialog_or_none() {
         assert!(is_open(&a, "find"), "{name} opens the one Find and Replace dialog");
     }
     // Needs a selected chart: nothing opens without one.
-    for name in ["changeChartType", "chartData", "nonsense"] {
+    for name in ["changeChartType", "chartData", "contributors", "models", "nonsense"] {
         let mut a = app_with("x");
         assert!(super::open(&mut a, name, &json!({})).is_none(), "{name}: no dialog");
         assert!(open_keys(&a).is_empty(), "{name}: nothing is open");
@@ -1818,6 +1818,22 @@ fn every_dialog_name_opens_its_dialog_or_none() {
     let _ = super::open(&mut a, "restrictEditing", &json!({}));
     assert!(a.restrict.open, "restrictEditing opens its pane");
     assert!(open_keys(&a).is_empty());
+}
+
+#[test]
+fn about_shows_the_mac_word_page_without_credit_tabs() {
+    use egui::accesskit::Role;
+
+    let mut h = app_harness(app_with("Test document"));
+    h.state_mut().run("ui.dialog", json!({"name": "about"})).unwrap();
+    crate::test_harness::frames(&mut h, 6);
+
+    assert_eq!(fields_of(h.state(), "help.about"), json!({"tab": "about"}));
+    assert!(h.query_all_by_label_contains("From Manik Pruthi").next().is_some());
+    assert!(h.query_by_role_and_label(Role::Tab, "About").is_none());
+    for label in ["Contributors", "Models", "Language data"] {
+        assert!(h.query_by_label(label).is_none(), "{label} is absent from About");
+    }
 }
 
 // ---------------------------------------------------------------- Zoom

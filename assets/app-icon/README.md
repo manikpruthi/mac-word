@@ -1,4 +1,11 @@
-# WordCraft app icon
+# App icons
+
+Mac-Word uses **Fold**, an original cobalt-blue icon with a folded document.
+[`mac-word.svg`](mac-word.svg) is the source. On macOS, run
+`./packaging/icons/mac-word-icon.sh` from the repository root to regenerate
+the Mac-Word ICNS, ICO and PNG assets with `sips`, `iconutil` and Cargo.
+
+## WordCraft app icon
 
 A **page and pen**: a sheet of paper with a folded corner and ruled lines, with a fountain pen
 lying across its lower right, on the app's blue field. It is drawn in the canvas palette the app's

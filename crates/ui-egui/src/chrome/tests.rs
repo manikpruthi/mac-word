@@ -298,6 +298,24 @@ fn the_integrated_title_bar_moves_and_closes_the_window() {
     assert!(h.state().has_document(), "and closes nothing by itself");
 }
 
+#[test]
+fn the_mac_inset_title_bar_clears_the_traffic_lights_and_drags() {
+    use craft::ui::shell::{Frame, MacInset};
+    use craft::window::policy::{Decision, Desktop, DesktopKind};
+    let inset = MacInset::default();
+    let spec = move || {
+        let desktop = Desktop { kind: DesktopKind::Other, ssd: None, gtk_theme: None, icon_theme: None };
+        crate::test_harness::install_spec().frame(Decision { frame: Frame::Inset(inset), overridden: None, desktop })
+    };
+    let mut h = crate::test_harness::builder_with(spec).with_size(egui::vec2(1440.0, 900.0)).build_ui_state(app_frame, new_app());
+    crate::test_harness::frames(&mut h, 6);
+
+    let autosave = h.get_by_label("AutoSave").rect();
+    assert!(autosave.left() >= inset.leading, "{autosave:?} overlaps the traffic lights");
+    let title = title_rect(&h);
+    assert!(drag_moves_the_window(&mut h, egui::pos2(title.max.x + 8.0, title.center().y)));
+}
+
 /// Under the OS's own title bar (a native frame) the app's bar still names the document in its middle, as the old
 /// bar did: the title is drawn as its Rename Document button, not only given as the bar's accessible name.
 #[test]

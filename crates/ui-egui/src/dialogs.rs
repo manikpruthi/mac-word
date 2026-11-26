@@ -3,11 +3,11 @@
 //! same result without the dialog.
 
 use craft::ui::dialog::DialogId;
-use craft::ui::patterns::form_dialogs::AboutTab;
 use serde_json::Value;
 
 use crate::WordApp;
 
+mod about;
 mod bookmarks;
 pub(crate) mod chrome;
 mod customize_keyboard;
@@ -49,10 +49,8 @@ pub fn open(app: &mut WordApp, name: &str, params: &Value) -> Option<DialogId> {
 /// The name table: the one place a dialog name picks its module. `parent` is the dialog the new one opens over.
 fn route(app: &mut WordApp, name: &str, params: &Value, parent: Option<DialogId>) -> Option<DialogId> {
     match name {
-        "about" => host::open_about(app, AboutTab::About),
-        "contributors" => host::open_about(app, AboutTab::Contributors),
-        "models" => host::open_about(app, AboutTab::Models),
-        "languageData" => host::open_about(app, AboutTab::App(0)),
+        "about" => about::open(app, about::Information::About),
+        "languageData" => about::open(app, about::Information::LanguageData),
         // The Restrict Editing pane is the one name that is not a dialog.
         "restrictEditing" => {
             app.restrict.open = true;

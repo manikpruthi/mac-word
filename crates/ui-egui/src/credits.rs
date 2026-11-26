@@ -1,13 +1,11 @@
-//! The About window's credits: every contributor (GitHub login always; display and real names only
+//! WordCraft's contributor metadata: every contributor (GitHub login always; display and real names only
 //! with recorded consent) and the AI models that helped. The tables are baked into the binary by
 //! build.rs from contributors/contributors.json; nothing is
 //! read at run time.
 
 use std::borrow::Cow;
 
-use craft::ui::patterns::form_dialogs::{AboutInfo, AboutLayout, AboutTab, Contributor as ContributorCredit, Credits, HostedAbout, ModelCredit};
-
-use crate::language_packs::language_data_tab;
+use craft::ui::patterns::form_dialogs::{AboutInfo, Contributor as ContributorCredit, Credits, ModelCredit};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Contributor {
@@ -63,11 +61,14 @@ pub fn credits() -> Credits {
     Credits::new(contributors, models, TOTAL_COMMITS)
 }
 
-/// The About tab's contents: name, blurb, version and build, and the project links in the old About's order (site,
-/// Discord, source), one to a line. A Nightly window names its channel, its exact feed version
-/// and commit, and offers a link to report a problem.
+/// The app name, description, version, build and licence shown in About.
 pub fn about_info() -> AboutInfo {
-    about_info_for(crate::os_window::identity(), option_env!("WORDCRAFT_BUILD_SHA"))
+    let identity = crate::os_window::identity();
+    let commit = match identity {
+        crate::os_window::LaunchIdentity::Stable => option_env!("MACWORD_BUILD_SHA"),
+        crate::os_window::LaunchIdentity::NightlyV1 => option_env!("WORDCRAFT_BUILD_SHA"),
+    };
+    about_info_for(identity, commit)
 }
 
 /// The About tab's three lines for `identity`: (name, blurb, version line). A Nightly window's
@@ -111,15 +112,8 @@ fn about_info_for(identity: crate::os_window::LaunchIdentity, commit: Option<&st
     )
 }
 
-/// The About dialog opened on `tab`, with the Language data tab after Models (`AboutTab::App(0)`). The name
-/// table of the dialogs opens it for `about`, `contributors`, `models` and `languageData`.
-pub(crate) fn about(tab: AboutTab) -> HostedAbout {
-    // PLAN: assumed `HostedAbout::layout(self, AboutLayout) -> Self` (look-dialogs-b framework fix)
-    HostedAbout::new(about_info(), credits()).app_tab(language_data_tab()).tab(tab).layout(AboutLayout::Listed)
-}
-
 /// A Nightly window's About names its channel, keeps the full feed version and commit, invents
-/// nothing when the commit is missing, and adds the report link the stable About does not have.
+/// and reports when the commit is unavailable.
 #[cfg(test)]
 mod nightly_about_tests {
     use crate::os_window::LaunchIdentity;
@@ -149,60 +143,5 @@ mod nightly_about_tests {
         assert!(stable.links.is_empty());
         let (name, _, _) = super::about_text(LaunchIdentity::Stable, Some(COMMIT));
         assert_eq!(name, "Mac-Word");
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::cell::RefCell;
-    use std::rc::Rc;
-
-    use craft::ui::contract::Role;
-    use craft::ui::dialog::DialogHost;
-    use craft::ui::testing::Fixture;
-
-    use super::*;
-
-    fn column_header(fixture: &Fixture, label: &str) -> egui::Rect {
-        fixture
-            .by_role(Role::COLUMN_HEADER)
-            .into_iter()
-            .find(|cell| fixture.tree().name_of(cell.node) == Some(label))
-            .unwrap_or_else(|| panic!("missing column header {label:?}"))
-            .rect
-    }
-
-    fn table_rect(fixture: &Fixture) -> egui::Rect {
-        fixture.by_role(Role::TABLE).first().expect("the credits table shows").rect
-    }
-
-    /// Verifies that WordCraft's `about(AboutTab::Models)` (`AboutLayout::Listed` with the baked
-    /// `MODELS` table) fits within the dialog and refits its `Company` column when narrowed.
-    /// The original drag-then-content-change refit check (#5588) belongs in `craft-libs` and is
-    /// tracked in `storytold/craft-libs#3372`.
-    #[test]
-    fn models_table_refits_to_narrower_window() {
-        let wide = egui::vec2(1400.0, 800.0);
-        let narrow = egui::vec2(660.0, 800.0);
-
-        let host = Rc::new(RefCell::new(DialogHost::new()));
-        let shown_host = Rc::clone(&host);
-        let mut fixture = Fixture::new(move |ui| shown_host.borrow_mut().run(ui));
-        fixture.room(wide);
-        host.borrow_mut().open(about(AboutTab::Models));
-        fixture.settle();
-
-        let wide_table = table_rect(&fixture);
-        let wide_company = column_header(&fixture, "Company");
-        let wide_last = column_header(&fixture, "Lines +/\u{2212}");
-        assert!(wide_last.right() <= wide_table.right() + 1.0, "the table opens fitted to the dialog: {wide_last:?} in {wide_table:?}");
-
-        fixture.room(narrow).settle();
-        let slim_table = table_rect(&fixture);
-        let slim_company = column_header(&fixture, "Company");
-        let slim_last = column_header(&fixture, "Lines +/\u{2212}");
-        assert!(slim_table.width() < wide_table.width() - 1.0, "hosted About shrinks with window: {slim_table:?} vs {wide_table:?}");
-        assert!(slim_company.width() < wide_company.width() - 1.0, "hosted About refits its Company column: {slim_company:?} vs {wide_company:?}");
-        assert!(slim_last.right() <= slim_table.right() + 1.0, "the narrower table still fits its last column: {slim_last:?} in {slim_table:?}");
     }
 }

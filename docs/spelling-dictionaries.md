@@ -47,7 +47,7 @@ built in; every other language is a pack.
   downloaded before. Each pack is checked against the sha256 in WordCraft's pinned list before it
   is used.
 - Text in that language is checked and hyphenated as soon as the pack is installed: no restart.
-- **Help › About › Language data** shows the full licence text of the built-in English data and
+- `ui.dialog {"name":"languageData"}` opens a standalone dialog with the full licence text of the built-in English data and
   of every installed pack.
 - Packs live in the font store's folder, under `language-packs/<language>/`, so every Craft app
   uses the same ones.

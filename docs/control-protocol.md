@@ -125,7 +125,7 @@ channel they act on the running app's packs, and install only while its download
 they never turn it on, and neither does a `ui.click` or `ui.key` on the app's Install, Add a
 language… or Refresh buttons. An install or a refresh runs in the background
 (`"started": true`); `proof.packs` reports its progress, then the result.
-`ui.dialog {"name": "languageData"}` opens About › Language data.
+`ui.dialog {"name": "languageData"}` opens the standalone Language data dialog.
 
 ### Open documents
 

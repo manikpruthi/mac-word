@@ -176,13 +176,14 @@ scans the fonts. Full methodology, cache limits and reproduction commands are in
 
 ## Differences from WordCraft
 
-- **Identity.** Named Mac-Word, version 1.0.0, bundle id `com.manikpruthi.mac-word`, original icon,
-  settings and logs under Mac-Word. About shows only the app's name, version and
-  licence (crediting WordCraft); the Contributors, Models and Language data pages (the spelling
-  dictionaries' licences require their text) stay in the binary and open on their own through `ui.dialog`.
+- **Identity.** Named Mac-Word, version 1.0.0, bundle id `com.manikpruthi.mac-word`, a cobalt-blue folded-page icon,
+  settings and logs under Mac-Word. Help › About and File › About show a single Mac-Word page
+  with Manik Pruthi, the version and the licence. Dictionary licences open in the standalone
+  Language data dialog through `ui.dialog`.
 - **Private.** No update checks, self-updater, update URLs, Discord or ArtCraft links: the app
   never phones home.
-- **Windows.** View › Window › Arrange All, View Side by Side and Synchronous Scrolling. While
+- **Windows.** Drag the empty area of the title bar to move the window. AutoSave sits clear of
+  the macOS window buttons. View › Window offers Arrange All, View Side by Side and Synchronous Scrolling. While
   scrolling in sync, the window being scrolled leads and its partner moves by the same distance, as
   in Word.
 - **Insert › Screenshot** through macOS's `screencapture`, run by the desktop front end on its own
