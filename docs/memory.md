@@ -86,9 +86,9 @@ back a few seconds later. The built-in sample, idle: 120 MB (it was about 190 MB
 | GPU on dual-GPU Macs | high performance (discrete) | low power (integrated) | The page is rasterised on the CPU; the GPU only composites a few textures. `WGPU_POWER_PREF` overrides it |
 | wgpu indirect-draw validation | on (off on Intel) | off | The app issues no indirect draws; the validation shaders and buffers were start-up time and memory only |
 | Media cache entries | 256 | 128 | Bounds bookkeeping as well as bytes |
-| Page rasters kept | whole pages within 3 viewport heights | 256-pixel tiles on screen and within half a viewport height of it (Read Mode keeps whole pages within one viewport height) | A whole page at page width on a Retina display is about 30 MB, 124 MB at 300%; a tile is a strip of what is on screen. Short tiles also keep the allocator's cache of freed raster buffers small (17 MB less at idle than 1,024-pixel tiles); up to 16 are rendered a frame, the area of four 1,024-pixel ones |
+| Page canvas caching | upstream `PageView` | upstream `craft::pages::ui::PageView` (zero-copy `WordPages` upload) | Upstream adopted viewport-scoped tile/page caching via `craft::pages`; Mac-Word keeps zero-copy `bytemuck::try_cast_vec` handoff |
 | Caret blink | forever | stops after 5 s without input, caret shown | See [Idle: the caret blink](#idle-the-caret-blink): while the window keeps redrawing, Metal keeps about 50 MB of upload memory |
-| Copies per rendered tile | 2 (raster, then the GPU image) | 1 (the raster's buffer becomes the image) | One 10 MB copy less per tile rendered (less work per keystroke); the footprint after rendering measured the same |
+| Copies per rendered tile | 2 (raster, then the GPU image) | 1 (the raster's buffer becomes the image) | Zero-copy `try_cast_vec` avoids a buffer copy per uploaded page/tile image |
 | Glyph outline cache | 50,000 | 10,000 | Ordinary documents use a few thousand; large CJK documents regenerate rather than keep every outline |
 | Renderer workers | up to 8 | up to 4 | Keeps text rasterisation fast without eight long-lived worker stacks/pools |
 | eframe system fonts | on | off | The app installs and falls back with its own font database; the duplicate scan held another copy |

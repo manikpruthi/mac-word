@@ -1,8 +1,9 @@
 # Mac-Word fork notes
 
-Mac-Word is a fork of [storytold/wordcraft](https://github.com/storytold/wordcraft), pinned at
-upstream commit `ae5c65b9dd11faf359ce039a2a487e57e3d824a2` (fetched 2026-11-03), released here as
-version **1.0.0**. The upstream remote is `upstream`; no changes are pushed back to it.
+Mac-Word is a fork of [storytold/wordcraft](https://github.com/storytold/wordcraft), originally
+forked from `ae5c65b9dd11faf359ce039a2a487e57e3d824a2` (2026-11-03) and updated with upstream
+changes through commit `6c6ac698` (2026-11-26), released here as version **1.0.0**. The upstream
+remote is `upstream`; no changes are pushed back to it.
 
 ## How Mac-Word was assembled
 
@@ -21,13 +22,13 @@ fixed the bugs above and cut GPU memory (see [memory.md](memory.md)).
 | Area | Upstream | Mac-Word |
 |---|---|---|
 | Product name | WordCraft | Mac-Word |
-| Version | 0.15.0 | 1.0.0 |
+| Version | 0.19.1 | 1.0.0 |
 | Bundle id | `ai.storyteller.wordcraft` | `com.manikpruthi.mac-word` |
 | Executable | `WordCraft` (`wordcraft`) | `Mac-Word` (`wordcraft` package, packaged binary renamed) |
 | CLI | `wordcraft-cli` | `mac-word-cli` (packaged rename; package name unchanged) |
 | Settings | `~/Library/Application Support/WordCraft` | `~/Library/Application Support/Mac-Word` |
 | Logs | `logs/wordcraft.log` | `logs/mac-word.log` |
-| About | contributor and model tabs, upstream links | “Mac-Word”, “Version 1.0.0”, “From Manik Pruthi”; no tabs; the Contributors, Models and Language data pages stay, opened on their own (the dictionaries' licences require their text) |
+| About | contributor and model tabs, upstream links | “Mac-Word”, “From Manik Pruthi”, Contributors, Models, and Language data tabs, crediting WordCraft with no external/Discord links |
 | Default comment/track-changes author | WordCraft User | The macOS account's full name (`id -F`) until one is set in File › Options; `Mac-Word User` in the CLI and MCP server |
 | Icons | WordCraft artwork | Original Mac-Word icon (`packaging/icons/mac-word-icon.swift`) |
 | Update checks | craft-update at startup and Help menu | Removed entirely (dependency, UI, command and URLs) |
@@ -59,13 +60,9 @@ dictionary folder is `~/Library/Application Support/Mac-Word/dictionaries`.
 
 ## Feature additions
 
-- **View › Window › Arrange All**: tiles every open native window over the screen.
-- **View › Window › View Side by Side**: places the active window and the previously focused one
-  across the screen and enables synchronous scrolling, as Word does.
-- **View › Window › Synchronous Scrolling**: the window being scrolled (under the pointer, or the
-  focused one) moves its side-by-side partner by the same distance, as Word does
-  (`WordApp::sync_scroll_to_pair`). With a single window, Side by Side and Synchronous Scrolling
-  report that a second window is needed and stay off.
+- **View › Window › Arrange All / View Side by Side / Synchronous Scrolling**: adopted from upstream
+  WordCraft (`crates/engine/src/windows.rs`, `cmd/view.rs`, `crates/ui-egui/src/windows/arrange.rs`),
+  replacing Mac-Word's initial implementation with multi-window pickers and document-point sync scrolling.
 - **Insert › Screenshot**: interactive selection through macOS's `screencapture`, inserted as a
   picture. The engine command only asks for it; the desktop front end runs the capture on its own
   thread (the window keeps drawing) and inserts the result with `insert.picture`. Screen
@@ -79,8 +76,8 @@ dictionary folder is `~/Library/Application Support/Mac-Word/dictionaries`.
   Mac-Word's own wording. Mac-Word stays an `Alternate` handler: it never becomes
   the default app without a click in File › Options › General.
 
-The parity checklist is regenerated with `cargo xtask parity`; the four additions above raise the
-live count from 505 to 509 of 520 catalogued features.
+The parity checklist is regenerated with `cargo xtask parity`; `Insert › Screenshot` raises the live
+feature count by one above upstream.
 
 ## Memory and start-up changes
 
@@ -90,8 +87,7 @@ See [memory.md](memory.md) for measurements and reproduction steps. In short:
 - image and vector decode caches 128 MB each → 64 MB each, 128 entries;
 - one frame in flight (two window drawables instead of three) and the integrated GPU on dual-GPU Macs;
 - wgpu's indirect-draw validation off on every Mac (the app issues no indirect draws);
-- pages drawn from 256-pixel tiles, keeping only the tiles on screen and within half a viewport
-  height of it, instead of whole pages within three viewport heights; one copy fewer per tile;
+- page canvas uses upstream `craft::pages::ui::PageView` (`WordPages` in `crates/ui-egui/src/canvas/source.rs`) with zero-copy `bytemuck::try_cast_vec` pixel handoff (one copy fewer per rendered strip/page);
 - the caret stops blinking, shown, 5 seconds after the last key, click or caret move: a window
   that keeps redrawing keeps about 50 MB of Metal memory in use;
 - glyph outline cache 50,000 → 10,000;

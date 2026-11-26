@@ -61,7 +61,7 @@ pub struct ViewState {
     pub read_width: f32,
     #[serde(skip, default = "default_read_height")]
     pub read_height: f32,
-    /// Reader-only layout controls; they are neither document formatting nor saved UI prefs.
+    /// Reader-only width, size and spacing controls are neither document formatting nor saved UI prefs.
     /// `None` chooses responsive column width and keeps the document's line spacing.
     #[serde(skip)]
     pub read_column_width: Option<f32>,
@@ -69,7 +69,7 @@ pub struct ViewState {
     pub read_zoom: f32,
     #[serde(skip)]
     pub read_line_spacing: Option<f32>,
-    /// Read Mode's Page Color: the paper the reading columns are drawn on.
+    /// Read Mode's Page Color: the paper the reading columns are drawn on. `Prefs` saves its value.
     #[serde(skip)]
     pub read_page_color: crate::cmd::view::ReadPageColor,
     pub dark_mode: bool,
@@ -104,14 +104,6 @@ pub struct ViewState {
     /// carries it to the window.
     #[serde(default)]
     pub full_screen: bool,
-    /// View › Window › View Side by Side: the active window and the one focused before it sit
-    /// side by side (per run; the front end places them).
-    #[serde(skip)]
-    pub side_by_side: bool,
-    /// View › Window › Synchronous Scrolling: scrolling one window of the side-by-side pair
-    /// scrolls the other.
-    #[serde(skip)]
-    pub sync_scroll: bool,
 }
 
 /// Where the Styles pane sits (`view.stylesPaneDock`, #1756).
@@ -169,6 +161,17 @@ fn default_read_zoom() -> f32 {
     1.0
 }
 
+impl ViewState {
+    /// Take the app-wide settings a view keeps a copy of from the saved preferences: Read Mode's
+    /// page colour and Check spelling as you type (#5740). A view made active goes through this
+    /// (a document switched to, opened or made, a window's view put back), so a change made while
+    /// another view was active holds in this one too.
+    pub(crate) fn follow_prefs(&mut self, prefs: &crate::prefs::Prefs) {
+        self.read_page_color = prefs.read_page_color;
+        self.proofing = prefs.check_spelling;
+    }
+}
+
 impl Default for ViewState {
     fn default() -> Self {
         ViewState {
@@ -213,8 +216,6 @@ impl Default for ViewState {
             outline: Default::default(),
             design_mode: false,
             full_screen: false,
-            side_by_side: false,
-            sync_scroll: false,
         }
     }
 }

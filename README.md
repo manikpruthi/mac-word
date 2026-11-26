@@ -127,6 +127,8 @@ Releases are built by hand with `./package.sh`; see [docs/releasing.md](docs/rel
 | Arrange All / Side by Side / Sync Scrolling | View › Window |
 | Full screen | ⌃⌘F or F11 |
 
+For strict export checks use `mac-word-cli convert in.docx out.pdf --strict` (or `render --strict`), and for MCP server runs pass `--automation-read-root DIR --automation-write-root DIR`.
+
 Everything in the ribbon is also a command; `mac-word-cli commands` lists all of them.
 
 ## How it works
