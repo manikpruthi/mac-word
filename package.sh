@@ -8,21 +8,27 @@ APP_NAME="Mac-Word"
 BUILD_DIR="${MACWORD_BUILD_DIR:-$HOME/Library/Caches/MacWordBuild}"
 RELEASE_DIR="release"
 APP="$BUILD_DIR/$APP_NAME.app"
+ARCH_SUFFIX=""
+if [ "${MACWORD_ARM64_ONLY:-0}" = 1 ]; then
+    ARCH_SUFFIX="-arm64"
+fi
+DMG="$RELEASE_DIR/Mac-Word-$VERSION$ARCH_SUFFIX.dmg"
 
 ./build.sh release
 
-rm -rf "$RELEASE_DIR"
 mkdir -p "$RELEASE_DIR"
 
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
-ditto "$APP" "$STAGE/$APP_NAME.app"
-ln -s /Applications "$STAGE/Applications"
+mkdir "$STAGE/payload"
+ditto "$APP" "$STAGE/payload/$APP_NAME.app"
+ln -s /Applications "$STAGE/payload/Applications"
 
 diskutil image create from --format UDZO --volumeName "$APP_NAME" \
-    "$STAGE" "$RELEASE_DIR/Mac-Word-$VERSION.dmg" >/dev/null
+    "$STAGE/payload" "$STAGE/Mac-Word.dmg" >/dev/null
+mv -f "$STAGE/Mac-Word.dmg" "$DMG"
 
 touch "$RELEASE_DIR/.metadata_never_index"
 
 echo "Packaged:"
-ls -lh "$RELEASE_DIR"
+ls -lh "$DMG"

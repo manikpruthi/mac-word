@@ -30,6 +30,7 @@ pub(super) struct WordPages {
     options: wordcraft_render::RenderOptions,
     /// The page a drag took an object off, and the object: rendered without it.
     hidden: Option<(usize, Pos)>,
+    tiled: bool,
 }
 
 impl WordPages {
@@ -39,7 +40,12 @@ impl WordPages {
         let view = view_key(app, dim_body, hidden.as_ref().map(|(_, p)| p));
         let options = page_render_options(app, dim_body);
         let doc = Arc::new(page_doc(app).clone());
-        WordPages { doc, layout: layout.clone(), keys: RefCell::new(std::mem::take(&mut app.canvas.page_keys)), view, options, hidden }
+        WordPages { doc, layout: layout.clone(), keys: RefCell::new(std::mem::take(&mut app.canvas.page_keys)), view, options, hidden, tiled: false }
+    }
+
+    pub(super) fn tiled(mut self) -> Self {
+        self.tiled = true;
+        self
     }
 
     /// The pass's document snapshot, shared with the accessibility describer so the pass holds one copy.
@@ -51,28 +57,25 @@ impl WordPages {
     pub(super) fn into_keys(self) -> PageKeys {
         self.keys.into_inner()
     }
-}
 
-impl ThumbSource<usize> for WordPages {
-    fn revision(&self, page: &usize, _request: &ThumbRequest) -> Revision {
+    pub(super) fn revision_for(&self, page: usize) -> Revision {
         let mut h = DefaultHasher::new();
-        page_shows(&mut self.keys.borrow_mut(), &self.layout, *page, self.view).hash(&mut h);
+        page_shows(&mut self.keys.borrow_mut(), &self.layout, page, self.view).hash(&mut h);
         Revision::new(h.finish())
     }
 
-    fn render(&self, page: &usize, request: &ThumbRequest) -> ThumbRender {
-        let index = *page;
+    pub(super) fn render_picture(&self, index: usize, side: u32, region: Option<egui::Rect>) -> ThumbRender {
         let Some(p) = self.layout.pages.get(index) else { return ThumbRender::Blank };
         let (pw, ph) = (dim(p.w, 1e5) as f32, dim(p.h, 1e6) as f32);
-        let whole = request.region.is_none();
-        let (x0, y0, x1, y1) = match request.region {
+        let whole = region.is_none();
+        let (x0, y0, x1, y1) = match region {
             Some(r) => (r.min.x.clamp(0.0, 1.0), r.min.y.clamp(0.0, 1.0), r.max.x.clamp(0.0, 1.0), r.max.y.clamp(0.0, 1.0)),
             None => (0.0, 0.0, 1.0, 1.0),
         };
         let area = wordcraft_geom::Rect::new(x0 * pw, y0 * ph, ((x1 - x0) * pw).max(0.01), ((y1 - y0) * ph).max(0.01));
         let longest = area.w.max(area.h);
         let cap = wordcraft_render::MAX_SIDE as f32 / longest;
-        let scale = request.side as f32 / longest;
+        let scale = side as f32 / longest;
         let scale = if scale.is_finite() { scale.clamp(0.01, cap.max(0.01)) } else { 1.0 };
         let (doc, layout) = (Arc::clone(&self.doc), Arc::clone(&self.layout));
         let mut options = self.options.clone();
@@ -93,6 +96,21 @@ impl ThumbSource<usize> for WordPages {
             };
             Ok(LoadedPicture::Image(image))
         }))
+    }
+}
+
+impl ThumbSource<usize> for WordPages {
+    fn revision(&self, page: &usize, _request: &ThumbRequest) -> Revision {
+        self.revision_for(*page)
+    }
+
+    fn render(&self, page: &usize, request: &ThumbRequest) -> ThumbRender {
+        if self.tiled && request.region.is_some() {
+            // The canvas paints its own visible tiles over the whole-page preview.
+            return ThumbRender::Blank;
+        }
+        let side = if self.tiled { request.side.min(512) } else { request.side };
+        self.render_picture(*page, side, request.region)
     }
 }
 

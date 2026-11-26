@@ -61,13 +61,25 @@ def main() -> int:
     pid = int(subprocess.check_output(["pgrep", "-n", "-f", f"control {port}"]).decode().split()[0])
 
     def send(method, params=None):
-        sock = socket.create_connection(("127.0.0.1", port), timeout=60)
-        stream = sock.makefile("rw")
-        stream.write(json.dumps({"id": 1, "key": key, "method": method, "params": params or {}}) + "\n")
-        stream.flush()
-        line = stream.readline()
-        sock.close()
-        return json.loads(line)
+        def exchange(stream, request):
+            stream.write(json.dumps(request) + "\n")
+            stream.flush()
+            return json.loads(stream.readline())
+
+        request = {"id": 2, "method": method, "params": params or {}}
+        with socket.create_connection(("127.0.0.1", port), timeout=60) as sock, sock.makefile("rw") as stream:
+            auth = exchange(stream, {"id": 1, "method": "auth", "params": {"token": key}})
+            if auth.get("ok"):
+                reply = exchange(stream, request)
+            else:
+                reply = None
+        if reply is None:
+            # The original release expected the key on every request.
+            with socket.create_connection(("127.0.0.1", port), timeout=60) as sock, sock.makefile("rw") as stream:
+                reply = exchange(stream, {**request, "key": key})
+        if not reply.get("ok"):
+            raise RuntimeError(f"{method}: {reply}")
+        return reply["result"]
 
     def run(command, params=None):
         return send("engine.execute", {"command": command, "params": params or {}})

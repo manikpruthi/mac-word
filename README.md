@@ -85,6 +85,8 @@ The honest area-by-area parity picture is kept in [docs/target-app-parity.md](do
 ./package.sh          # release build + release/Mac-Word-1.0.0.dmg
 ```
 
+For an Apple-silicon-only package, run `MACWORD_ARM64_ONLY=1 ./package.sh`. The DMG filename ends in `-arm64.dmg`.
+
 The command-line tool is written next to the app as `~/Library/Caches/MacWordBuild/mac-word-cli`.
 
 For development the Cargo workspace runs directly:
@@ -152,9 +154,9 @@ keyboard, control channel, CLI and MCP all reach the same behaviour. Layering is
 
 ## Memory and speed
 
-The app is built for an 8 GB Mac. Measured with `scripts/bench-foreground.py` on an Apple-silicon
-Mac: the release build opened with `open` (in front, as you use it) on a 40-section, 17,000-word
-document, physical footprint from `footprint` once each step settles:
+The app is built for an 8 GB Mac. The original Apple-silicon release was measured with
+`scripts/bench-foreground.py` on a 40-section, 17,000-word document. The script opens the app in
+front and measures its physical footprint once each step settles.
 
 | Step | Footprint |
 |---|---:|
@@ -165,8 +167,8 @@ document, physical footprint from `footprint` once each step settles:
 | Page width, scrolled to the end | 215 MB |
 | 300% zoom | 216 MB |
 
-Pages are drawn from native-resolution 256-pixel tiles and only the tiles on screen and half a
-screen around it are kept, so memory stays flat as you zoom and scroll. The caret stops blinking
+The editing canvas draws 512-pixel tiles at screen resolution over small page previews. It keeps
+sharp tiles for the viewport and small previews for nearby pages. The caret stops blinking
 5 seconds after the last key, click or caret move (as Word does on Windows' default settings), which
 lets Metal release its upload memory while the window is idle. The window keeps at most two
 drawables, dual-GPU Macs stay on the integrated GPU, and each rendered tile goes to the GPU without

@@ -46,6 +46,7 @@ mod reading_metrics;
 pub(crate) mod rulers;
 mod source;
 mod story;
+mod tiles;
 
 pub use balloons::{deselect_balloon, select_balloon};
 use context_menu::ContextAsk;
@@ -110,6 +111,8 @@ pub struct CanvasState {
     focus_after_pass: Option<Vec<egui::Id>>,
     /// How many page pictures the page view kept resident after the last pass (S-L352).
     pub(crate) resident_pictures: usize,
+    #[cfg(test)]
+    pub(crate) resident_tile_bytes: usize,
     /// The caret's glide and blink.
     pub(crate) glide: crate::caret_glide::CaretGlide,
     /// The comment selection and drafts, shared by the Comments pane and the balloons.
@@ -390,6 +393,8 @@ impl Default for CanvasState {
             focus_pending: true,
             focus_after_pass: None,
             resident_pictures: 0,
+            #[cfg(test)]
+            resident_tile_bytes: 0,
             glide: crate::caret_glide::CaretGlide::default(),
             comments: Default::default(),
             context_request: None,
@@ -793,7 +798,7 @@ fn show_pages(app: &mut WordApp, ui: &mut Ui, layout: &Arc<DocLayout>, full: Rec
     let options =
         LayoutOptions { markup: f64::from(markup_width(app)), min_columns: if app.session.view.multi_page { 2 } else { 1 }, ..LayoutOptions::WORD };
     let paper = DataColor::new(paper_color(app));
-    let source = source::WordPages::new(app, layout, dim_body, hidden);
+    let source = source::WordPages::new(app, layout, dim_body, hidden).tiled();
     // The describer owns its snapshot, as the source does, so the page view can hold it while the body edits the app.
     let described = preview_sel(app).unwrap_or(app.session.sel_ends()).clone();
     let describer = crate::a11y::DocumentDescriber::new(source.doc(), layout.clone(), (described.anchor.clone(), described.focus.clone()));
@@ -808,8 +813,11 @@ fn show_pages(app: &mut WordApp, ui: &mut Ui, layout: &Arc<DocLayout>, full: Rec
     let mut fix = ScrollFix::default();
     // The caret the follow wants whose page the pass did not place: its page, the page's height and the caret.
     let mut unplaced = None;
+    #[cfg(test)]
+    let mut resident_tile_bytes = 0;
     let out = PageView::new(tl!("Document"), &source, &mut state, paper)
         .options(options)
+        .picture_reach(0.5)
         // Hide White Space cuts each page to its text area: without the bodies the pages show whole.
         .bodies(&bodies)
         .navigation(navigation_options())
@@ -821,6 +829,11 @@ fn show_pages(app: &mut WordApp, ui: &mut Ui, layout: &Arc<DocLayout>, full: Rec
         .show(ui, |ui, body| {
             body_rect = body.rect;
             body_view = Some(body.view);
+            let _tiles = tiles::show(ui, body, &source);
+            #[cfg(test)]
+            {
+                resident_tile_bytes = _tiles.bytes;
+            }
             // Canvas controls take their presses first, then the tool host runs, then the caret shows over them.
             TextMarks::over(body.pages).areas(&areas).show_at(ui, body.rect);
             gridlines::show(app, ui, layout, body);
@@ -986,6 +999,10 @@ fn show_pages(app: &mut WordApp, ui: &mut Ui, layout: &Arc<DocLayout>, full: Rec
         app.canvas.focus_page(&ctx);
     }
     app.canvas.resident_pictures = out.resident_pictures();
+    #[cfg(test)]
+    {
+        app.canvas.resident_tile_bytes = resident_tile_bytes;
+    }
     app.canvas.view = state;
     if out.toggle_white_space {
         let _ = app.run("view.hideWhiteSpace", json!({"value": !app.session.view.hide_white_space}));

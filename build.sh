@@ -29,6 +29,9 @@ if [ -z "${CRAFT_I18N_DIR:-}" ] && [ -d "../craft-i18n/language-data" ]; then
 fi
 
 TARGETS=(aarch64-apple-darwin x86_64-apple-darwin)
+if [ "${MACWORD_ARM64_ONLY:-0}" = 1 ]; then
+    TARGETS=(aarch64-apple-darwin)
+fi
 for t in "${TARGETS[@]}"; do
     rustup target list --installed | grep -qx "$t" || rustup target add "$t"
 done
@@ -36,16 +39,22 @@ done
 # One cargo invocation for both targets: cargo schedules them together.
 echo "Compiling $APP_NAME $VERSION for ${TARGETS[*]} ($MODE)…"
 TARGET_ARGS=()
-for t in "${TARGETS[@]}"; do TARGET_ARGS+=(--target "$t"); done
+for t in "${TARGETS[@]}"; do
+    TARGET_ARGS+=(--target "$t")
+done
 cargo build ${PROFILE_ARGS[@]+"${PROFILE_ARGS[@]}"} -p wordcraft -p wordcraft-cli "${TARGET_ARGS[@]}"
 
 TARGET_DIR="${CARGO_TARGET_DIR:-target}"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-lipo -create "$TARGET_DIR/aarch64-apple-darwin/$PROFILE_DIR/wordcraft" "$TARGET_DIR/x86_64-apple-darwin/$PROFILE_DIR/wordcraft" \
-    -output "$APP/Contents/MacOS/$APP_EXECUTABLE"
-lipo -create "$TARGET_DIR/aarch64-apple-darwin/$PROFILE_DIR/wordcraft-cli" "$TARGET_DIR/x86_64-apple-darwin/$PROFILE_DIR/wordcraft-cli" \
-    -output "$BUILD_DIR/mac-word-cli"
+APP_BINARIES=()
+CLI_BINARIES=()
+for t in "${TARGETS[@]}"; do
+    APP_BINARIES+=("$TARGET_DIR/$t/$PROFILE_DIR/wordcraft")
+    CLI_BINARIES+=("$TARGET_DIR/$t/$PROFILE_DIR/wordcraft-cli")
+done
+lipo -create "${APP_BINARIES[@]}" -output "$APP/Contents/MacOS/$APP_EXECUTABLE"
+lipo -create "${CLI_BINARIES[@]}" -output "$BUILD_DIR/mac-word-cli"
 lipo -info "$APP/Contents/MacOS/$APP_EXECUTABLE"
 
 cp assets/app-icon/mac-word.icns "$APP/Contents/Resources/$APP_EXECUTABLE.icns"

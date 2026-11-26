@@ -71,10 +71,12 @@ fn scrolling_a_big_table_fingerprints_only_pages_coming_into_view() {
     // Scroll a long way down: each newly shown page is fingerprinted once. The renders a step asks for finish before
     // the next step, whose frame uploads them.
     let mut max_textures = 0;
+    let mut max_tile_bytes = 0;
     for _ in 0..9 {
         wheel(&mut h, -2000.0);
         h.step();
         max_textures = max_textures.max(h.state().canvas.resident_pictures);
+        max_tile_bytes = max_tile_bytes.max(h.state().canvas.resident_tile_bytes);
         jobs.run_all();
     }
     h.step();
@@ -89,4 +91,6 @@ fn scrolling_a_big_table_fingerprints_only_pages_coming_into_view() {
     max_textures = max_textures.max(h.state().canvas.resident_pictures);
     assert!(max_textures <= 12, "textures kept while scrolling: {max_textures}");
     assert!(h.state().canvas.resident_pictures >= 1, "the pages in view stay rendered");
+    max_tile_bytes = max_tile_bytes.max(h.state().canvas.resident_tile_bytes);
+    assert!(max_tile_bytes > 0 && max_tile_bytes <= 8 * 1024 * 1024, "visible tile bytes during long scroll: {max_tile_bytes}");
 }
