@@ -11,12 +11,12 @@ use craft::ui::contract::{
 };
 use craft::ui::list::{ThumbAspect, ThumbSize};
 use craft::ui::menu::{Menu, MenuItem};
-use craft::ui::primitives::IconSpec;
-use craft::ui::primitives::textures::Revision;
+use craft::ui::primitives::textures::{Revision, TextureStore, TextureStoreOptions, fit_rect};
+use craft::ui::primitives::{ContentPainterCx, IconSpec};
 use craft::ui::runtime::commands::resolve;
 use craft::ui::runtime::env::Env;
 use craft::ui::tile_grid::{CaptionPlace, GridZoom, Tile, TileGrid};
-use egui::{Color32, ColorImage, Pos2, Ui};
+use egui::{Color32, ColorImage, Pos2, Rect, Ui};
 use serde_json::json;
 use wordcraft_doc::props::CharProps;
 use wordcraft_doc::{Block, Document, Paragraph, Table, para_block};
@@ -53,7 +53,7 @@ fn interface_mode(ui: &Ui) -> Mode {
 }
 
 /// Makes one tile's image.
-type Maker<'a> = Box<dyn Fn() -> ColorImage + 'a>;
+type PreviewPainter<'a> = Box<dyn Fn(&ContentPainterCx<'_>, Rect) + 'a>;
 
 /// A transparent 1 px picture, for a tile whose layout produced nothing.
 fn blank_image() -> ColorImage {
@@ -127,16 +127,34 @@ fn table_style_image(doc: &Document, style: &str, ppp: f32, dark: bool) -> Color
     img
 }
 
-/// Gallery items of `entries` (id, name), each drawn by its maker and keyed by its kind, id and density.
-fn image_items<'a>(kind: &str, entries: &[(String, String)], makers: &'a [Maker<'a>], ppp: f32, revision: Revision) -> Vec<GalleryItem<'a, String>> {
+/// Keep the previews in individually sized textures. The shared Picture atlas allocates 16 MiB
+/// on the first tile, while the gallery's visible previews together are much smaller.
+fn preview_painters<'a>(
+    kind: &str,
+    entries: &'a [(String, String)],
+    ppp: f32,
+    revision: Revision,
+    render: impl Fn(&str) -> ColorImage + Copy + 'a,
+) -> Vec<PreviewPainter<'a>> {
     entries
         .iter()
-        .zip(makers)
-        .map(|((id, name), make)| GalleryItem {
-            key: id.clone(),
-            label: name.clone().into(),
-            face: GalleryFace::image(picture_key(&(kind, id, ppp.to_bits())), revision, &**make),
+        .map(|(id, _)| {
+            let key = picture_key(&(kind, id, ppp.to_bits()));
+            Box::new(move |cx: &ContentPainterCx<'_>, rect: Rect| {
+                let ctx = cx.painter.ctx();
+                let store = TextureStore::in_context(ctx, "wordcraft-ribbon-previews", TextureStoreOptions::thumbnails());
+                let texture = store.get_or_put(ctx, key, revision, || render(id));
+                cx.picture(texture.id, fit_rect(rect, texture.size_vec2()), texture.uv(), 0.0);
+            }) as PreviewPainter<'a>
         })
+        .collect()
+}
+
+fn image_items<'a>(entries: &[(String, String)], previews: &'a [PreviewPainter<'a>]) -> Vec<GalleryItem<'a, String>> {
+    entries
+        .iter()
+        .zip(previews)
+        .map(|((id, name), paint)| GalleryItem { key: id.clone(), label: name.clone().into(), face: GalleryFace::Paint(&**paint) })
         .collect()
 }
 
@@ -152,9 +170,8 @@ pub(crate) fn styles(ui: &mut Ui, app: &mut WordApp, current: Option<&str>) {
     let current = current.unwrap_or("Normal").to_string();
     let out = {
         let doc = &app.session.doc;
-        let makers: Vec<Maker<'_>> =
-            entries.iter().map(|(id, _)| Box::new(move || style_tile_image(doc, id, ppp, dark_page, dark)) as Maker<'_>).collect();
-        let items = image_items("style", &entries, &makers, ppp, revision);
+        let previews = preview_painters("style", &entries, ppp, revision, |id| style_tile_image(doc, id, ppp, dark_page, dark));
+        let items = image_items(&entries, &previews);
         // Each tile shows the sample's first letters at their size: a large thumbnail as wide as `STYLE_TILE_W` crops
         // them (68 by 48 points), so the sample is not scaled down, with the style's name under it.
         Gallery::new(tl!("Styles"), &items, Some(&current))
@@ -197,8 +214,8 @@ pub(crate) fn style_sets(ui: &mut Ui, app: &mut WordApp) {
     // The tiles draw a fresh document: no styles hash, but the fonts they are set in are an input.
     let revision = preview_revision(0, wordcraft_fonts::FontDb::global().generation(), crate::i18n::current().code(), false, dark);
     let entries: Vec<(String, String)> = STYLE_SETS.iter().map(|name| ((*name).to_string(), format!("Style set: {name}"))).collect();
-    let makers: Vec<Maker<'_>> = entries.iter().map(|(name, _)| Box::new(move || style_set_image(name, ppp, dark)) as Maker<'_>).collect();
-    let items = image_items("set", &entries, &makers, ppp, revision);
+    let previews = preview_painters("set", &entries, ppp, revision, |name| style_set_image(name, ppp, dark));
+    let items = image_items(&entries, &previews);
     // Each tile is a small page (title, heading, paragraph) at the large thumbnail size, about as wide as high as the
     // image `style_set_image` renders, so the title and heading read as they did in the old ribbon. All seven show at
     // full width, so no buttons stand beside them, as in the old ribbon.
@@ -228,8 +245,8 @@ pub(crate) fn table_styles(ui: &mut Ui, app: &mut WordApp) {
     let entries: Vec<(String, String)> = styles.into_iter().map(|(_, id, name)| (id, name)).collect();
     let out = {
         let doc = &app.session.doc;
-        let makers: Vec<Maker<'_>> = entries.iter().map(|(id, _)| Box::new(move || table_style_image(doc, id, ppp, dark)) as Maker<'_>).collect();
-        let items = image_items("table", &entries, &makers, ppp, revision);
+        let previews = preview_painters("table", &entries, ppp, revision, |id| table_style_image(doc, id, ppp, dark));
+        let items = image_items(&entries, &previews);
         // Each tile shows a 5×4 table sample at the large thumbnail size in the 3:2 landscape
         // ratio `table_style_image` renders (112×74 pt including margins), matching the sibling
         // `Styles` and `Style Sets` galleries and v0.18.1's ribbon previews.

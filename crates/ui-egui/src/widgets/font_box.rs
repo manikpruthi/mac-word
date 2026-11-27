@@ -81,12 +81,47 @@ pub fn font_box(ui: &mut Ui, app: &mut WordApp, label: impl Into<Label>, family:
     let warning = app.font_box_warning(family);
     let rows = actions();
     let catalog = Catalog::global();
+    #[cfg(target_os = "macos")]
+    let catalog = {
+        // The document font database already resolves the displayed family and warning.
+        // The richer picker catalog is only needed once a user interacts with this field.
+        static EMPTY: std::sync::OnceLock<Arc<Catalog>> = std::sync::OnceLock::new();
+        if catalog.is_ready() {
+            catalog
+        } else {
+            EMPTY.get_or_init(|| {
+                let empty = Arc::new(Catalog::of_files(Vec::new()));
+                empty.rescan();
+                empty
+            })
+        }
+    };
     // PLAN: assumed `UiState::font_picker: FontPickerSettings`, replacing `recent_fonts` (app-hub).
     let out = font_picker(label, Bind::bound(family), catalog, Bind::bound(&mut app.ui.font_picker), &rows, warning.as_deref()).show(ui);
+    #[cfg(target_os = "macos")]
+    if !Catalog::global().is_ready() {
+        let installed = Catalog::global();
+        let response = &out.edit.response;
+        let interacted = out.edit.hover.over || response.clicked() || craft::ui::runtime::focus::is_focused(ui.ctx(), response.id);
+        let requested = ui.ctx().data(|data| data.get_temp::<bool>(font_box_catalog_requested()).unwrap_or(false));
+        if interacted && !requested {
+            ui.ctx().data_mut(|data| data.insert_temp(font_box_catalog_requested(), true));
+        }
+        if interacted || requested {
+            installed.scan_in_background();
+            // Keep the field active while scanning so its first click or edit carries through.
+            ui.ctx().request_repaint_after(std::time::Duration::from_millis(80));
+        }
+    }
     if let Some(command) = out.action.and_then(action_command) {
         let _ = app.run(command, json!({}));
     }
     out
+}
+
+#[cfg(target_os = "macos")]
+fn font_box_catalog_requested() -> egui::Id {
+    egui::Id::unique("wordcraft-installed-font-picker-catalog")
 }
 
 impl WordApp {

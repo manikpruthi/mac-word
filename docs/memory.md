@@ -115,6 +115,11 @@ back a few seconds later. The built-in sample, idle: 120 MB (it was about 190 MB
   Mac serially. Mac-Word writes the parsed catalog to `font-catalog.json` in the settings folder
   after the first scan and reuses it when every font folder and file still has the same timestamp.
   The first scan is spread across up to eight threads; later launches only stat the files.
+- **Font picker catalog.** The macOS ribbon and mini toolbar use the document font information
+  to display the current family. Hovering, clicking or focusing a font box starts the picker’s
+  separate installed-font catalog in the background. Font dialogs can still load it directly.
+- **Ribbon previews.** Styles, Style Sets and Table Styles cache each preview at its rendered
+  size. A few visible previews no longer allocate a 2,048 × 2,048 shared RGBA texture.
 - **Lazy proofing and documents.** The sample or requested document is built once, preferences are
   read once, and the window is shown before any optional work (language packs, update checks,
   Zotero) can run.

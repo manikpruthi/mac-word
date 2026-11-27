@@ -168,6 +168,10 @@ an extra copy. The installed-font catalog is cached between launches, so only th
 scans the fonts. Full methodology, cache limits and reproduction commands are in
 [docs/memory.md](docs/memory.md).
 
+On macOS, the ribbon and mini toolbar load the installed-font picker catalog when you
+interact with a font box. Document fonts and missing-font warnings are available on opening.
+Ribbon gallery previews use small textures sized to each preview.
+
 ## Differences from WordCraft
 
 - **Identity.** Named Mac-Word, version 1.0.0, bundle id `com.manikpruthi.mac-word`, a cobalt-blue folded-page icon,
