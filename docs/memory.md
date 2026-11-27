@@ -24,8 +24,11 @@ Two traps to avoid when measuring:
   ordinary use never allocates. `bench-memory.py` used to wait for the first frame with a
   screenshot, which inflated every number it reported; it now waits for `ui.inspect`.
 
-macOS doesn't return freed large blocks to the system at once: `Malloc Large` in `footprint`
-includes freed blocks the allocator keeps for reuse, which it gives back under memory pressure.
+The macOS allocator can retain freed blocks for reuse, so `Malloc Large` in `footprint` can
+include memory the app has already freed. The desktop bundle enables
+`MallocSpaceEfficient` through Launch Services to return unused pages sooner.
+[Apple bundle documentation](https://developer.apple.com/documentation/bundleresources/information-property-list/lsenvironment) ·
+[Apple allocator source](https://github.com/apple-oss-distributions/libmalloc/blob/main/src/malloc.c)
 
 ## Results
 
@@ -39,8 +42,21 @@ and measures physical footprint after the app settles.
 - After returning to page width and scrolling to the end, they used 216 MB, 664 MB, and 254 MB.
 
 At 300%, the large-malloc category fell from 389 MB to 22 MB and graphics memory fell from
-127 MB to 39 MB after the tile fix. The newer build still has a higher footprint at 100% than
-the original release. The installed arm64 package used ThinLTO for the app and CLI binaries.
+127 MB to 39 MB after the tile fix. Deferring the ribbon font catalog and sizing textures to
+each style preview then brought the four measurements to 167 MB, 173 MB, 179 MB, and 185 MB.
+
+A foreground rerun compared the original release with the signed arm64 package after enabling
+the allocator setting. Both used the same generated document and an isolated profile. The
+collector activated each window through AppKit before measuring and checked the open document
+and zoom through the control channel on the new build. The installed package's physical
+footprint and the rerun of the original were:
+
+- 100% zoom: 119 MB, down from 143 MB.
+- Page width: 121 MB, down from 162 MB.
+- 300% zoom: 113 MB, down from 216 MB.
+- Page width after moving to the end: 116 MB, down from 212 MB.
+
+The installed arm64 package used ThinLTO for the app and CLI binaries.
 
 Historical measurements on Apple silicon, macOS 27.2, release builds, 2026-11-03.
 `bench-foreground.py` used the generated document:

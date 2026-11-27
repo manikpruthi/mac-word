@@ -32,6 +32,12 @@
   <string>Mac-Word</string>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.productivity</string>
+  <!-- Return unused allocator pages sooner when the desktop app runs. -->
+  <key>LSEnvironment</key>
+  <dict>
+    <key>MallocSpaceEfficient</key>
+    <string>1</string>
+  </dict>
   <!-- Must match MACOSX_DEPLOYMENT_TARGET in package.sh. Big Sur is the first release on
        Apple silicon and has the Metal feature set wgpu targets. -->
   <key>LSMinimumSystemVersion</key>

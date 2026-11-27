@@ -155,8 +155,8 @@ keyboard, control channel, CLI and MCP all reach the same behaviour. Layering is
 ## Memory and speed
 
 The app is built for an 8 GB Mac. On the 40-section, 17,000-word benchmark document, the
-Apple-silicon release used 215 MB at 100% zoom and 237 MB at 300%. The build before the
-tile fix used 276 MB and 690 MB at those zoom levels. Run `scripts/bench-foreground.py`
+Apple-silicon release used 119 MB at 100% zoom and 113 MB at 300%. The original release
+used 143 MB and 216 MB at those zoom levels. Run `scripts/bench-foreground.py`
 to measure the app's physical footprint after each zoom level settles.
 
 The editing canvas draws 512-pixel tiles at screen resolution over small page previews. It keeps
@@ -170,7 +170,8 @@ scans the fonts. Full methodology, cache limits and reproduction commands are in
 
 On macOS, the ribbon and mini toolbar load the installed-font picker catalog when you
 interact with a font box. Document fonts and missing-font warnings are available on opening.
-Ribbon gallery previews use small textures sized to each preview.
+Ribbon gallery previews use small textures sized to each preview. The desktop bundle tells
+the macOS allocator to release unused memory sooner.
 
 ## Differences from WordCraft
 
