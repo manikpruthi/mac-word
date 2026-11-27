@@ -154,18 +154,10 @@ keyboard, control channel, CLI and MCP all reach the same behaviour. Layering is
 
 ## Memory and speed
 
-The app is built for an 8 GB Mac. The original Apple-silicon release was measured with
-`scripts/bench-foreground.py` on a 40-section, 17,000-word document. The script opens the app in
-front and measures its physical footprint once each step settles.
-
-| Step | Footprint |
-|---|---:|
-| Start screen (no document) | 95 MB |
-| Built-in sample, idle | 120 MB |
-| 100% zoom | 143 MB |
-| Page width | 162 MB |
-| Page width, scrolled to the end | 215 MB |
-| 300% zoom | 216 MB |
+The app is built for an 8 GB Mac. On the 40-section, 17,000-word benchmark document, the
+Apple-silicon release used 215 MB at 100% zoom and 237 MB at 300%. The build before the
+tile fix used 276 MB and 690 MB at those zoom levels. Run `scripts/bench-foreground.py`
+to measure the app's physical footprint after each zoom level settles.
 
 The editing canvas draws 512-pixel tiles at screen resolution over small page previews. It keeps
 sharp tiles for the viewport and small previews for nearby pages. The caret stops blinking

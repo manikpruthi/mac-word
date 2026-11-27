@@ -29,6 +29,19 @@ includes freed blocks the allocator keeps for reuse, which it gives back under m
 
 ## Results
 
+On November 27, 2026, `bench-foreground.py` ran the same generated document on three Mac-Word
+release builds on an Apple-silicon Mac with macOS 27.2.1. The script checks each control response
+and measures physical footprint after the app settles.
+
+- At 100%, the original release (`ef7e961a`) used 143 MB. After the WordCraft sync (`092556ab`), it used 276 MB. With viewport tiles (`a8fb7615`), it used 215 MB.
+- At page width, the three builds used 162 MB, 462 MB, and 229 MB, respectively.
+- At 300%, they used 216 MB, 690 MB, and 237 MB.
+- After returning to page width and scrolling to the end, they used 216 MB, 664 MB, and 254 MB.
+
+At 300%, the large-malloc category fell from 389 MB to 22 MB and graphics memory fell from
+127 MB to 39 MB after the tile fix. The newer build still has a higher footprint at 100% than
+the original release. The installed arm64 package used ThinLTO for the app and CLI binaries.
+
 Historical measurements on Apple silicon, macOS 27.2, release builds, 2026-11-03.
 `bench-foreground.py` used the generated document:
 
